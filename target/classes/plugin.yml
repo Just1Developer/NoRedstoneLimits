@@ -1,0 +1,6 @@
+name: NoRedstoneLimits
+version: '1.0-SNAPSHOT'
+main: net.justonedev.mc.noRedstoneLimits.NoRedstoneLimits
+api-version: '1.21'
+commands:
+  change:
