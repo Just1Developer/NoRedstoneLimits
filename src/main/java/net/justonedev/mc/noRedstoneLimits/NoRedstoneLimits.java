@@ -60,29 +60,8 @@ public final class NoRedstoneLimits extends JavaPlugin implements Listener {
     @EventHandler
     public void onRedstone(BlockRedstoneEvent e) {
         if (e.getBlock().getType() != Material.REDSTONE_WIRE) return;
-
-        // Todo here are issues
-
-        /*
-
-        print(0, "§eNorth block: " + neighbor);
-        print(0, "§bNorth south equals activated: " + neighbor.getRelative(BlockFace.SOUTH).equals(e.getBlock()));
-        print(0, "§dNorth isRepeater: " + isRepeater(neighbor));
-        if (isRepeater(neighbor)) print(0, "§cNorth isPowered: " + isPowered(neighbor));
-
-        * */
-
         // Other power source
         Block b = e.getBlock();
-        /*
-        for (BlockFace face : BlockFace.values()) {
-            if (b.isBlockFacePowered(face)) {
-                //print(1, "Redstone is powered otherwise");
-                //return;
-            }
-        }
-
-         */
         print(3, "§eWatching: " + isAnyNeighborActiveWatchingRepeater(b));
         updateNearbyRepeatersNearlyInstant(b);
         if (isAnyNeighborActiveWatchingRepeater(b)) {
@@ -94,34 +73,6 @@ public final class NoRedstoneLimits extends JavaPlugin implements Listener {
         for (BlockFace face : reverseFace.values()) {
             if (isPowering(block.getRelative(face), reverseFace.get(face))) return true;
         }
-
-        /*
-        print(0, "Checking validity...:");
-        Block neighbor = block.getRelative(BlockFace.NORTH);
-        print(0, "§eNorth | isRepeater: §c" + isRepeater(neighbor) + "§e, isPowering: §c" + isPowering(neighbor, BlockFace.SOUTH) + "§e, isPowered: §c" + isPowered(neighbor));
-        if (isRepeater(neighbor) && isPowering(neighbor, BlockFace.SOUTH)) {
-            return true;
-        }
-
-        neighbor = block.getRelative(BlockFace.EAST);
-        print(0, "§dEast | isRepeater: §c" + isRepeater(neighbor) + "§d, isPowering: §c" + isPowering(neighbor, BlockFace.WEST) + "§d, isPowered: §c" + isPowered(neighbor));
-        if (isRepeater(neighbor) && isPowering(neighbor, BlockFace.WEST)) {
-            return true;
-        }
-
-        neighbor = block.getRelative(BlockFace.SOUTH);
-        print(0, "§aSouth | isRepeater: §c" + isRepeater(neighbor) + "§a, isPowering: §c" + isPowering(neighbor, BlockFace.NORTH) + "§a, isPowered: §c" + isPowered(neighbor));
-        if (isRepeater(neighbor) && isPowering(neighbor, BlockFace.NORTH)) {
-            return true;
-        }
-
-        neighbor = block.getRelative(BlockFace.WEST);
-        print(0, "§bWest | isRepeater: §c" + isRepeater(neighbor) + "§b, isPowering: §c" + isPowering(neighbor, BlockFace.EAST) + "§b, isPowered: §c" + isPowered(neighbor));
-        if (isRepeater(neighbor) && isPowering(neighbor, BlockFace.EAST)) {
-            return true;
-        }
-
-         */
         return false;
     }
 
@@ -135,10 +86,9 @@ public final class NoRedstoneLimits extends JavaPlugin implements Listener {
         reverseFace.put(BlockFace.WEST, BlockFace.EAST);
     }
 
-    private static boolean isRepeater(Block noDelayRepeater) {
-        if (noDelayRepeater == null) return false;
-        if (noDelayRepeater.getType() != REPEATER_MAT) return false;
-        return true;
+    private static boolean isNotRepeater(Block noDelayRepeater) {
+        if (noDelayRepeater == null) return true;
+        return noDelayRepeater.getType() != REPEATER_MAT;
     }
 
     private static boolean isPowered(Block noDelayRepeater) {
@@ -146,26 +96,16 @@ public final class NoRedstoneLimits extends JavaPlugin implements Listener {
     }
     private static boolean isPowering(Block noDelayRepeater, BlockFace isLookingTowards) {
         if (noDelayRepeater == null) return false;
-        print(0, "§b0");
         if (noDelayRepeater.getType() != REPEATER_MAT) return false;
-        print(0, "§b1");
 
         Directional directional = (Directional) noDelayRepeater.getBlockData();
-        print(0, "§b2");
         BlockFace side = directional.getFacing();
 
         if (!reverseFace.containsKey(side)) return false;
         if (isLookingTowards == BlockFace.SELF) return noDelayRepeater.isBlockPowered();
         if (side != isLookingTowards) return false; // Not looking at us
 
-        print(0, "§b3 + " + side + " - §c" + noDelayRepeater.getType());
-
-        // Todo hmmm
-
         BlockFace reverse = reverseFace.get(side);
-        //print(1, "§d4 + " + reverseFace.get(side) + " + " + noDelayRepeater.isBlockFacePowered(reverseFace.get(side)) + " + " + noDelayRepeater.isBlockFacePowered(side) + " + " + noDelayRepeater.isBlockFaceIndirectlyPowered(reverseFace.get(side)) + " + " + noDelayRepeater.isBlockFaceIndirectlyPowered(side));
-        //print(1, "§d5 + " + (noDelayRepeater.getRelative(reverse).getBlockData() instanceof AnaloguePowerable) + " + " + (((AnaloguePowerable) noDelayRepeater.getRelative(reverse).getBlockData()).getPower() > 0));
-
         BlockData data = noDelayRepeater.getRelative(reverse).getBlockData();
 
         return noDelayRepeater.isBlockFacePowered(reverse)
@@ -187,43 +127,32 @@ public final class NoRedstoneLimits extends JavaPlugin implements Listener {
 
     private void updateNearbyRepeatersInstant(Block b) {
         for (BlockFace face : reverseFace.values()) {
-            print(2, "§aRelative: " + b.getRelative(face));
             if (!isPowering(b.getRelative(face), face)) continue;
-
-
 
             // Its powered and looking towards this next block:
             Block next = b.getRelative(face).getRelative(face);
-            print(2, "§aThe block " + face + " of the set block is a powered repeater. Will be looking at next block " + next);
             if (next.getBlockData() instanceof AnaloguePowerable powerable) {
                 // activate block power.
                 powerable.setPower(powerable.getMaximumPower());
                 next.setBlockData(powerable);
-                print(2, "§aSet next to §ePowered§a. Next is: §c" + next);
-
-                // Todo this will also cause repeaters to be powerable from the side.
-                // Just ignored for now
-            } else print(0, "§aDid §cnot§aset next to §cPowered");
+            }
         }
     }
 
     @EventHandler
     public void onPlace(BlockPlaceEvent e) {
         Block b = e.getBlock();
-        print(0, "§e1");
         if (b.getBlockData() instanceof AnaloguePowerable powerable) {
-            print(0, "§e2");
             // Is it perhaps powering a repeater?
             updateNearbyRepeaters(b);
             // It it powered by one?
             if (!isAnyNeighborActiveWatchingRepeater(b)) return;
-            print(0, "§e3");
             powerable.setPower(powerable.getMaximumPower());
             b.setBlockData(powerable);
             return;
         }
 
-        if (!isRepeater(e.getBlock())) return;
+        if (isNotRepeater(e.getBlock())) return;
 
         Directional directional = (Directional) e.getBlock().getBlockData();
         BlockFace side = directional.getFacing();
@@ -243,7 +172,7 @@ public final class NoRedstoneLimits extends JavaPlugin implements Listener {
             return;
         }
 
-        if (!isRepeater(e.getBlock())) return;
+        if (isNotRepeater(e.getBlock())) return;
 
         Directional directional = (Directional) e.getBlock().getBlockData();
         BlockFace side = directional.getFacing();
@@ -258,6 +187,10 @@ public final class NoRedstoneLimits extends JavaPlugin implements Listener {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!sender.isOp()) {
+            sender.sendMessage("§cNo.");
+            return;
+        }
         _do = !_do;
         print(0, "ok -> " + _do);
         return true;
