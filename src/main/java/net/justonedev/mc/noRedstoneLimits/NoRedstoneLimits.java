@@ -6,6 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.AnaloguePowerable;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.type.RedstoneWire;
 import org.bukkit.command.Command;
@@ -31,7 +32,7 @@ public final class NoRedstoneLimits extends JavaPlugin implements Listener {
 
     boolean _do = true;
 
-    static final boolean DO_DEBUG_PRINTS = true;
+    static final boolean DO_DEBUG_PRINTS = false;
     static final int DEBUG_LEVEL = 0;
 
     private static void print(int level, String msg) {
@@ -159,13 +160,15 @@ public final class NoRedstoneLimits extends JavaPlugin implements Listener {
 
         // Todo hmmm
 
-        Block block = noDelayRepeater;
-        print(1, "§d4 + " + reverseFace.get(side) + " + " + block.isBlockFacePowered(reverseFace.get(side)) + " + " + block.isBlockFacePowered(side) + " + " + block.isBlockFaceIndirectlyPowered(reverseFace.get(side)) + " + " + block.isBlockFaceIndirectlyPowered(side));
+        BlockFace reverse = reverseFace.get(side);
+        //print(1, "§d4 + " + reverseFace.get(side) + " + " + noDelayRepeater.isBlockFacePowered(reverseFace.get(side)) + " + " + noDelayRepeater.isBlockFacePowered(side) + " + " + noDelayRepeater.isBlockFaceIndirectlyPowered(reverseFace.get(side)) + " + " + noDelayRepeater.isBlockFaceIndirectlyPowered(side));
+        //print(1, "§d5 + " + (noDelayRepeater.getRelative(reverse).getBlockData() instanceof AnaloguePowerable) + " + " + (((AnaloguePowerable) noDelayRepeater.getRelative(reverse).getBlockData()).getPower() > 0));
 
+        BlockData data = noDelayRepeater.getRelative(reverse).getBlockData();
 
-        //block = noDelayRepeater.getRelative(side);
-        //print(0, "§b5 + " + reverseFace.get(side) + " + " + block.isBlockFacePowered(reverseFace.get(side)) + " + " + block.isBlockFacePowered(side) + " + " + block.isBlockFaceIndirectlyPowered(reverseFace.get(side)) + " + " + block.isBlockFaceIndirectlyPowered(side));
-        return noDelayRepeater.isBlockFacePowered(reverseFace.get(side));
+        return noDelayRepeater.isBlockFacePowered(reverse)
+                && data instanceof AnaloguePowerable
+                && ((AnaloguePowerable) data).getPower() > 0;
     }
 
     private void updateNearbyRepeaters(Block b) {
@@ -189,7 +192,7 @@ public final class NoRedstoneLimits extends JavaPlugin implements Listener {
                     // Just ignored for now
                 } else print(0, "§aDid §cnot§aset next to §cPowered");
             }
-        }, 10);
+        }, 1);
     }
 
     @EventHandler
