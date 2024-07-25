@@ -33,7 +33,7 @@ public final class NoRedstoneLimits extends JavaPlugin implements Listener {
     boolean _do = true;
 
     static final boolean DO_DEBUG_PRINTS = false;
-    static final int DEBUG_LEVEL = 0;
+    static final int DEBUG_LEVEL = 2;
 
     private static void print(int level, String msg) {
         if (!DO_DEBUG_PRINTS) return;
@@ -61,6 +61,8 @@ public final class NoRedstoneLimits extends JavaPlugin implements Listener {
     public void onRedstone(BlockRedstoneEvent e) {
         if (e.getBlock().getType() != Material.REDSTONE_WIRE) return;
 
+        // Todo here are issues
+
         /*
 
         print(0, "§eNorth block: " + neighbor);
@@ -81,8 +83,8 @@ public final class NoRedstoneLimits extends JavaPlugin implements Listener {
         }
 
          */
-        print(1, "§eWatching: " + isAnyNeighborActiveWatchingRepeater(b));
-
+        print(3, "§eWatching: " + isAnyNeighborActiveWatchingRepeater(b));
+        updateNearbyRepeatersNearlyInstant(b);
         if (isAnyNeighborActiveWatchingRepeater(b)) {
             e.setNewCurrent(MAX_CURRENT);
         }
@@ -173,26 +175,36 @@ public final class NoRedstoneLimits extends JavaPlugin implements Listener {
 
     private void updateNearbyRepeaters(Block b) {
         Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
-            for (BlockFace face : reverseFace.values()) {
-                print(2, "§aRelative: " + b.getRelative(face));
-                if (!isPowering(b.getRelative(face), face)) continue;
-
-
-
-                // Its powered and looking towards this next block:
-                Block next = b.getRelative(face).getRelative(face);
-                print(2, "§aThe block " + face + " of the set block is a powered repeater. Will be looking at next block " + next);
-                if (next.getBlockData() instanceof AnaloguePowerable powerable) {
-                    // activate block power.
-                    powerable.setPower(powerable.getMaximumPower());
-                    next.setBlockData(powerable);
-                    print(2, "§aSet next to §ePowered§a. Next is: §c" + next);
-
-                    // Todo this will also cause repeaters to be powerable from the side.
-                    // Just ignored for now
-                } else print(0, "§aDid §cnot§aset next to §cPowered");
-            }
+            updateNearbyRepeatersInstant(b);
         }, 1);
+    }
+
+    private void updateNearbyRepeatersNearlyInstant(Block b) {
+        Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
+            updateNearbyRepeatersInstant(b);
+        }, 0);
+    }
+
+    private void updateNearbyRepeatersInstant(Block b) {
+        for (BlockFace face : reverseFace.values()) {
+            print(2, "§aRelative: " + b.getRelative(face));
+            if (!isPowering(b.getRelative(face), face)) continue;
+
+
+
+            // Its powered and looking towards this next block:
+            Block next = b.getRelative(face).getRelative(face);
+            print(2, "§aThe block " + face + " of the set block is a powered repeater. Will be looking at next block " + next);
+            if (next.getBlockData() instanceof AnaloguePowerable powerable) {
+                // activate block power.
+                powerable.setPower(powerable.getMaximumPower());
+                next.setBlockData(powerable);
+                print(2, "§aSet next to §ePowered§a. Next is: §c" + next);
+
+                // Todo this will also cause repeaters to be powerable from the side.
+                // Just ignored for now
+            } else print(0, "§aDid §cnot§aset next to §cPowered");
+        }
     }
 
     @EventHandler
